@@ -3,7 +3,7 @@ package main
 import (
     "os"
     "fmt"
-    "go-postgres/router"
+    "go-united/router"
     "log"
     "net/http"
 )
@@ -18,7 +18,7 @@ func main() {
             port = "3000"
     }
 
-    fmt.Println("Starting server on the ******** FEATURE 2 baby ******* port..."+port)
+    fmt.Println("Starting server on the ******** GO UNITED ******* port..."+port)
 
     log.Fatal(http.ListenAndServe(":"+port, r))
 }

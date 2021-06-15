@@ -1,7 +1,7 @@
 // Run on an agent where we want to use Go
 
 node {
-    def gitRepository = 'https://github.com/agdevtools/go-postgres.git/'
+    def gitRepository = 'https://github.com/agdevtools/go-united.git/'
     def gitBranch = '*/master'
     def githubcreds = [
             $class      : 'UsernamePasswordMultiBinding',

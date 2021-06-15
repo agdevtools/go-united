@@ -4,7 +4,7 @@ import (
     "database/sql"
     "encoding/json" // package to encode and decode the json into struct and vice versa
     "fmt"
-    "go-postgres/models" // models package where User schema is defined
+    "go-united/models" // models package where User schema is defined
     "log"
     "net/http" // used to access the request and response object of the api
     "os"       // used to read the environment variable
@@ -19,6 +19,11 @@ import (
 // response format
 type response struct {
     ID      int64  `json:"id,omitempty"`
+    Message string `json:"message,omitempty"`
+}
+
+type team_response struct {
+    PLAYER_ID      int64  `json:"player_id,omitempty"`
     Message string `json:"message,omitempty"`
 }
 
@@ -200,6 +205,21 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(res)
 }
 
+// GetAllUser will return all the users
+func GetAllPlayers(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    // get all the users in the db
+    players, err := getAllPlayers()
+
+    if err != nil {
+        log.Fatalf("Unable to get all user. %v", err)
+    }
+
+    // send all the users as response
+    json.NewEncoder(w).Encode(players)
+}
+
 //------------------------- handler functions ----------------
 // insert one user in the DB
 func insertUser(user models.User) int64 {
@@ -368,4 +388,47 @@ func deleteUser(id int64) int64 {
     fmt.Printf("Total rows/record affected %v", rowsAffected)
 
     return rowsAffected
+}
+
+// get one user from the DB by its userid
+func getAllPlayers() ([]models.Team, error) {
+    // create the postgres db connection
+    db := createConnection()
+
+    // close the db connection
+    defer db.Close()
+
+    var team []models.Team
+
+    // create the select sql query
+    sqlStatement := `SELECT * FROM team`
+
+    // execute the sql statement
+    rows, err := db.Query(sqlStatement)
+
+    if err != nil {
+        log.Fatalf("Unable to execute the query. %v", err)
+    }
+
+    // close the statement
+    defer rows.Close()
+
+    // iterate over the rows
+    for rows.Next() {
+        var player models.Team
+
+        // unmarshal the row object to user
+        err = rows.Scan(&player.PLAYER_ID, &player.player_name, &player.player_position)
+
+        if err != nil {
+            log.Fatalf("Unable to scan the row. %v", err)
+        }
+
+        // append the user in the users slice
+        team = append(team, player)
+
+    }
+
+    // return empty user on error
+    return team, err
 }

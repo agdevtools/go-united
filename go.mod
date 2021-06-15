@@ -1,4 +1,4 @@
-module go-postgres
+module go-united
 
 go 1.16
 
