@@ -398,7 +398,7 @@ func getAllPlayers() ([]models.Team, error) {
     // close the db connection
     defer db.Close()
 
-    var team []models.Team
+    var teams []models.Team
 
     // create the select sql query
     sqlStatement := `SELECT * FROM team`
@@ -415,20 +415,20 @@ func getAllPlayers() ([]models.Team, error) {
 
     // iterate over the rows
     for rows.Next() {
-        var player models.Team
+        var team models.Team
 
         // unmarshal the row object to user
-        err = rows.Scan(&player.PLAYER_ID, &player.player_name, &player.player_position)
+        err = rows.Scan(&team.PLAYER_ID, &team.Player_name, &team.Player_position)
 
         if err != nil {
             log.Fatalf("Unable to scan the row. %v", err)
         }
 
         // append the user in the users slice
-        team = append(team, player)
+        teams = append(teams, team)
 
     }
 
     // return empty user on error
-    return team, err
+    return teams, err
 }
