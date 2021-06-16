@@ -18,6 +18,7 @@ func Router() *mux.Router {
     router.HandleFunc("/api/deleteuser/{id}", middleware.DeleteUser).Methods("DELETE", "OPTIONS")
 
     router.HandleFunc("/api/team", middleware.GetAllPlayers).Methods("GET", "OPTIONS")
+    router.HandleFunc("/api/team", middleware.CreatePlayer).Methods("POST", "OPTIONS")
 
     return router
 }
