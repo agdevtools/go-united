@@ -11,7 +11,6 @@ import (
     "strconv"  // package used to covert string into int type
 
     "github.com/gorilla/mux" // used to get the params from the route
-
     "github.com/joho/godotenv" // package used to read the .env file
     _ "github.com/lib/pq"      // postgres golang driver
 )
@@ -23,7 +22,7 @@ type response struct {
 }
 
 type team_response struct {
-    PLAYER_ID      int64  `json:"player_id,omitempty"`
+    ID      int64  `json:"player_id,omitempty"`
     Message string `json:"message,omitempty"`
 }
 
@@ -53,6 +52,38 @@ func createConnection() *sql.DB {
     fmt.Println("Successfully connected!")
     // return the connection
     return db
+}
+
+// CreatePlayer create a player in the postgres db
+func CreatePlayer(w http.ResponseWriter, r *http.Request) {
+    // set the header to content type x-www-form-urlencoded
+    // Allow all origin to handle cors issue
+    w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Methods", "POST")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+    // create an empty user of type models.User
+    var team models.Team
+
+    // decode the json request to user
+    err := json.NewDecoder(r.Body).Decode(&team)
+
+    if err != nil {
+        log.Fatalf("Unable to decode the request body.  %v", err)
+    }
+
+    // call insert user function and pass the user
+    insertID := insertPlayer(team)
+
+    // format a response object
+    res := team_response{
+        ID:      insertID,
+        Message: "Player created successfully",
+    }
+
+    // send the response
+    json.NewEncoder(w).Encode(res)
 }
 
 // CreateUser create a user in the postgres db
@@ -221,6 +252,36 @@ func GetAllPlayers(w http.ResponseWriter, r *http.Request) {
 }
 
 //------------------------- handler functions ----------------
+// insert one player in the Team table in the DB
+func insertPlayer(team models.Team) int64 {
+
+    // create the postgres db connection
+    db := createConnection()
+
+    // close the db connection
+    defer db.Close()
+
+    // create the insert sql query
+    // returning userid will return the id of the inserted user
+    sqlStatement := `INSERT INTO team (player_id, player_name, player_position) VALUES ($1, $2, $3) RETURNING player_id`
+
+    // the inserted id will store in this id
+    var id int64
+
+    // execute the sql statement
+    // Scan function will save the insert id in the id
+    err := db.QueryRow(sqlStatement, team.PLAYER_ID, team.Player_name, team.Player_position).Scan(&id)
+
+    if err != nil {
+        log.Fatalf("Unable to execute the query. %v", err)
+    }
+
+    fmt.Printf("Inserted a single player record %v", id)
+
+    // return the inserted id
+    return id
+}
+
 // insert one user in the DB
 func insertUser(user models.User) int64 {
 
@@ -250,6 +311,8 @@ func insertUser(user models.User) int64 {
     // return the inserted id
     return id
 }
+
+
 
 // get one user from the DB by its userid
 func getUser(id int64) (models.User, error) {
