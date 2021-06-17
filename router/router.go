@@ -19,6 +19,7 @@ func Router() *mux.Router {
 
     router.HandleFunc("/api/team", middleware.GetAllPlayers).Methods("GET", "OPTIONS")
     router.HandleFunc("/api/team", middleware.CreatePlayer).Methods("POST", "OPTIONS")
+    router.HandleFunc("/api/team/{id}", middleware.GetPlayer).Methods("GET", "OPTIONS")
 
     return router
 }

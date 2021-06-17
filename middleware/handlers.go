@@ -143,6 +143,33 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(user)
 }
 
+// GetPlayer will return a single player by its id
+func GetPlayer(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    // get the userid from the request params, key is "id"
+    params := mux.Vars(r)
+
+    // convert the id type from string to int
+    id, err := strconv.Atoi(params["id"])
+
+    if err != nil {
+        log.Fatalf("Unable to convert the string into int.  %v", err)
+    }
+
+    // call the getPlayer function with player id to retrieve a single player
+    player, err := getPlayer(int64(id))
+
+    if err != nil {
+        log.Fatalf("Unable to get player. %v", err)
+    }
+
+    // send the response
+    json.NewEncoder(w).Encode(player)
+}
+
+
+
 // GetAllUser will return all the users
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
@@ -312,6 +339,39 @@ func insertUser(user models.User) int64 {
     return id
 }
 
+// get one player from the DB by its userid
+func getPlayer(id int64) (models.Team, error) {
+    // create the postgres db connection
+    db := createConnection()
+
+    // close the db connection
+    defer db.Close()
+
+    // create a user of models.User type
+    var team models.Team
+
+    // create the select sql query
+    sqlStatement := `SELECT * FROM team WHERE player_id=$1`
+
+    // execute the sql statement
+    row := db.QueryRow(sqlStatement, id)
+
+    // unmarshal the row object to user
+    err := row.Scan(&team.PLAYER_ID, &team.Player_name, &team.Player_position)
+
+    switch err {
+    case sql.ErrNoRows:
+        fmt.Println("No rows were returned!")
+        return team, nil
+    case nil:
+        return team, nil
+    default:
+        log.Fatalf("Unable to scan the row. %v", err)
+    }
+
+    // return empty user on error
+    return team, err
+}
 
 
 // get one user from the DB by its userid
@@ -348,7 +408,7 @@ func getUser(id int64) (models.User, error) {
     return user, err
 }
 
-// get one user from the DB by its userid
+// get all users from the DB by its userid
 func getAllUsers() ([]models.User, error) {
     // create the postgres db connection
     db := createConnection()
