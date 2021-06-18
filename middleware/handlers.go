@@ -185,6 +185,51 @@ func GetAllUser(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(users)
 }
 
+// UpdatePlayer update player's detail in the postgres db
+func UpdatePlayer(w http.ResponseWriter, r *http.Request) {
+
+    w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Methods", "PUT")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+    // get the userid from the request params, key is "id"
+    params := mux.Vars(r)
+
+    // convert the id type from string to int
+    id, err := strconv.Atoi(params["id"])
+
+    if err != nil {
+        log.Fatalf("Unable to convert the string into int.  %v", err)
+    }
+
+    // create an empty user of type models.User
+    var team models.Team
+
+    // decode the json request to user
+    err = json.NewDecoder(r.Body).Decode(&team)
+
+    if err != nil {
+        log.Fatalf("Unable to decode the request body.  %v", err)
+    }
+
+    // call update user to update the user
+    updatedRows := updatePlayer(int64(id), team)
+
+    // format the message string
+    msg := fmt.Sprintf("Player updated successfully. Total rows/record affected %v", updatedRows)
+
+    // format the response message
+    res := team_response{
+        ID:      int64(id),
+        Message: msg,
+    }
+
+    // send the response
+    json.NewEncoder(w).Encode(res)
+}
+
+
 // UpdateUser update user's detail in the postgres db
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
@@ -297,7 +342,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(res)
 }
 
-// GetAllUser will return all the users
+// GetAllUPlayer will return all the users
 func GetAllPlayers(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
     w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -515,6 +560,38 @@ func updateUser(id int64, user models.User) int64 {
 
     return rowsAffected
 }
+
+// update player in the DB
+func updatePlayer(id int64, team models.Team) int64 {
+
+    // create the postgres db connection
+    db := createConnection()
+
+    // close the db connection
+    defer db.Close()
+
+    // create the update sql query
+    sqlStatement := `UPDATE team SET player_name=$2, player_position=$3 WHERE player_id=$1`
+
+    // execute the sql statement
+    res, err := db.Exec(sqlStatement, id, team.Player_name, team.Player_position)
+
+    if err != nil {
+        log.Fatalf("Unable to execute the query. %v", err)
+    }
+
+    // check how many rows affected
+    rowsAffected, err := res.RowsAffected()
+
+    if err != nil {
+        log.Fatalf("Error while checking the affected rows. %v", err)
+    }
+
+    fmt.Printf("Total rows/record affected %v", rowsAffected)
+
+    return rowsAffected
+}
+
 
 // delete player in the DB
 func deletePlayer(id int64) int64 {
