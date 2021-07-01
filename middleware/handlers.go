@@ -9,7 +9,6 @@ import (
     "net/http" // used to access the request and response object of the api
     "os"       // used to read the environment variable
     "strconv"  // package used to covert string into int type
-
     "github.com/gorilla/mux" // used to get the params from the route
     "github.com/joho/godotenv" // package used to read the .env file
     _ "github.com/lib/pq"      // postgres golang driver
@@ -24,6 +23,36 @@ type response struct {
 type team_response struct {
     ID      int64  `json:"player_id,omitempty"`
     Message string `json:"message,omitempty"`
+}
+
+type GoService interface {
+     GetAllPlayers() (http.ResponseWriter, *http.Request)
+}
+
+type GoServiceImp struct{}
+
+type DBService interface {
+     getAllPlayers() ([]models.Team, error)
+}
+
+type DBServiceImp struct{}
+
+// GetAllUPlayers will return all the players from the team.
+func  GetAllPlayers(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("****  In GetAllPlayers implement my intereface test ******* can you believe it??")
+    w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    // get all the users in the db
+    var s DBService
+    s = DBServiceImp{}
+    players, err := s.getAllPlayers()
+
+    if err != nil {
+        log.Fatalf("Unable to get all user. %v", err)
+    }
+
+    // send all the users as response
+    json.NewEncoder(w).Encode(players)
 }
 
 // create connection with postgres db
@@ -53,6 +82,12 @@ func createConnection() *sql.DB {
     // return the connection
     return db
 }
+
+func TestTest() string {
+ return "this is the real method"
+}
+
+
 
 // CreatePlayer create a player in the postgres db
 func CreatePlayer(w http.ResponseWriter, r *http.Request) {
@@ -190,21 +225,6 @@ func DeletePlayer(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(res)
 }
 
-// GetAllUPlayers will return all the players from the team.
-func GetAllPlayers(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    // get all the users in the db
-    players, err := getAllPlayers()
-
-    if err != nil {
-        log.Fatalf("Unable to get all user. %v", err)
-    }
-
-    // send all the users as response
-    json.NewEncoder(w).Encode(players)
-}
-
 //------------------------- handler functions ----------------
 // insert one player in the Team table in the DB
 func insertPlayer(team models.Team) int64 {
@@ -335,7 +355,7 @@ func deletePlayer(id int64) int64 {
 }
 
 // get one user from the DB by its userid
-func getAllPlayers() ([]models.Team, error) {
+func (s DBServiceImp) getAllPlayers() ([]models.Team, error) {
     // create the postgres db connection
     db := createConnection()
 

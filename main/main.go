@@ -3,13 +3,16 @@ package main
 import (
     "os"
     "fmt"
-    "go-united/router"
     "log"
     "net/http"
+     "github.com/gorilla/mux"
 )
 
 func main() {
-    r := router.Router()
+   // r := router.Router()
+var r *mux.Router
+    r = mux.NewRouter()
+    //router(r)
     // fs := http.FileServer(http.Dir("build"))
     // http.Handle("/", fs)
 
