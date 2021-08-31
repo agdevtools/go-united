@@ -2,7 +2,6 @@ package router
 
 import (
     "go-united/middleware"
-
     "github.com/gorilla/mux"
 )
 
@@ -12,6 +11,7 @@ func Router() *mux.Router {
     router := mux.NewRouter()
 
     router.HandleFunc("/api/team", middleware.GetAllPlayers).Methods("GET", "OPTIONS")
+    router.HandleFunc("/api/teams", middleware.GetTeams).Methods("GET", "OPTIONS")
     router.HandleFunc("/api/team", middleware.CreatePlayer).Methods("POST", "OPTIONS")
     router.HandleFunc("/api/team/{id}", middleware.GetPlayer).Methods("GET", "OPTIONS")
     router.HandleFunc("/api/team/{id}", middleware.UpdatePlayer).Methods("PUT", "OPTIONS")

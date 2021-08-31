@@ -205,6 +205,21 @@ func GetAllPlayers(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(players)
 }
 
+// GetTeams will return all the teams from the team table.
+func GetTeams(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    // get all the users in the db
+    teams, err := getTeams()
+
+    if err != nil {
+        log.Fatalf("Unable to get all teams. %v", err)
+    }
+
+    // send all the users as response
+    json.NewEncoder(w).Encode(teams)
+}
+
 //------------------------- handler functions ----------------
 // insert one player in the Team table in the DB
 func insertPlayer(team models.Team) int64 {
@@ -217,14 +232,14 @@ func insertPlayer(team models.Team) int64 {
 
     // create the insert sql query
     // returning userid will return the id of the inserted user
-    sqlStatement := `INSERT INTO team (player_id, player_name, player_position) VALUES ($1, $2, $3) RETURNING player_id`
+    sqlStatement := `INSERT INTO team (player_id, player_name, player_position, team_id) VALUES ($1, $2, $3, $4) RETURNING player_id`
 
     // the inserted id will store in this id
     var id int64
 
     // execute the sql statement
     // Scan function will save the insert id in the id
-    err := db.QueryRow(sqlStatement, team.PLAYER_ID, team.Player_name, team.Player_position).Scan(&id)
+    err := db.QueryRow(sqlStatement, team.PLAYER_ID, team.Player_name, team.Player_position, team.Team_id).Scan(&id)
 
     if err != nil {
         log.Fatalf("Unable to execute the query. %v", err)
@@ -362,7 +377,50 @@ func getAllPlayers() ([]models.Team, error) {
         var team models.Team
 
         // unmarshal the row object to user
-        err = rows.Scan(&team.PLAYER_ID, &team.Player_name, &team.Player_position)
+        err = rows.Scan(&team.PLAYER_ID, &team.Player_name, &team.Player_position, &team.Team_id)
+
+        if err != nil {
+            log.Fatalf("Unable to scan the row. %v", err)
+        }
+
+        // append the user in the users slice
+        teams = append(teams, team)
+
+    }
+
+    // return empty user on error
+    return teams, err
+}
+
+// get one user from the DB by its userid
+func getTeams() ([]models.Teams, error) {
+    // create the postgres db connection
+    db := createConnection()
+
+    // close the db connection
+    defer db.Close()
+
+    var teams []models.Teams
+
+    // create the select sql query
+    sqlStatement := `SELECT * FROM teams`
+
+    // execute the sql statement
+    rows, err := db.Query(sqlStatement)
+
+    if err != nil {
+        log.Fatalf("Unable to execute the query. %v", err)
+    }
+
+    // close the statement
+    defer rows.Close()
+
+    // iterate over the rows
+    for rows.Next() {
+        var team models.Teams
+
+        // unmarshal the row object to user
+        err = rows.Scan(&team.Team_id, &team.Team_name)
 
         if err != nil {
             log.Fatalf("Unable to scan the row. %v", err)
